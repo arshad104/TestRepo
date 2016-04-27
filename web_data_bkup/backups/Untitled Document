@@ -1,0 +1,203 @@
+from pymongo import MongoClient
+from IPython import embed
+
+import logging
+LOG = logging.getLogger("django")
+
+MONGO_DB_IP = '127.0.0.1'
+MONGO_DB_PORT = 27017
+
+DEFAULT_DB = "test_db"
+DEFAULT_COLLECTION = 'test_graphs'
+
+class MongoDB(object):
+
+	def __init__(self):
+
+		self.database = DEFAULT_DB
+		self.graph_collection = DEFAULT_COLLECTION
+		self.conn = MongoClient(MONGO_DB_IP,MONGO_DB_PORT)
+		self.db = self.conn[self.database]
+		self.graph_coll = self.db[self.graph_collection]
+
+	# def insert_model(self, model_data):
+		
+	# 	self.model_coll.insert(model_data)
+
+	# 	print "Model saved successfully!"
+
+	# 	return model_data
+
+	# def add_graph_to_model(self, model_data, graph_name):
+
+	# 	self.model_coll.update( model_data, { "$addToSet": { "graphs": graph_name } } )
+
+	# 	print 'Model updated successfully.'
+		
+	# 	return model_data
+
+	# def remove_graph_from_model(self, model_name, graph_name):
+
+	# 	self.model_coll.update( {"name": model_name}, { "$pull": { "graphs": graph_name } } )
+
+	# 	print 'Model updated successfully.'
+		
+	# 	return graph_name
+
+	# def get_all_models(self):
+		
+	# 	cursor = self.model_coll.find({}, { '_id':0, 'session_id':0, 'graphs':0 })
+		
+	# 	data = []
+	# 	for obj in cursor:
+	# 		data.append(obj)
+
+	# 	return data
+
+	# def get_model_by_name(self, name):
+		
+	# 	obj = self.model_coll.find_one( { "name":name }, { '_id':0 } )
+
+	# 	return obj
+
+	# def get_model(self, obj):
+		
+	# 	obj = self.model_coll.find_one( obj, { '_id':0 } )
+
+	# 	return obj
+
+
+	def insert_graph(self, graph_data):
+		
+		self.graph_coll.insert_one(graph_data)
+		
+		print 'Graph inserted successfully.'
+		
+		return graph_data
+
+	# def insert_many_graphs(self, graphs_data):
+		
+	# 	self.graph_coll.insert(graphs_data)
+		
+	# 	print 'Graphs inserted successfully.'
+		
+	# 	return graphs_data
+
+	def delete_graph(self, graph_data):
+		
+		self.graph_coll.remove(graph_data)
+		
+		print 'Graph deleted successfully.'
+		
+		return graph_data
+
+	# def get_one_graph(self, graph_name, session_id):
+		
+	# 	obj = self.graph_coll.find_one( { "name":graph_name, "session_id":session_id }, { '_id':0 } )
+		
+	# 	return obj
+
+	def get_graph(self, obj):
+		
+		cursor = self.graph_coll.find( obj, { '_id':0 } )
+		
+		data = [graph for graph in cursor]
+
+		return data
+
+	def get_many_graphs(self, graph_names, session_id):
+		
+		cursor = self.graph_coll.find( { "name": { "$in": graph_names }, "session_id":session_id }, { '_id':0 } )
+		
+		data = []
+
+		for obj in cursor:
+			data.append(obj)
+
+		return data
+
+	def insert_node(self, graph_data, node_data):
+		
+		self.graph_coll.update( graph_data, { "$addToSet": { "nodes": node_data } } )
+
+		print 'Node inserted successfully.'
+		
+		return node_data
+
+	def update_node(self, graph_data, node_data):
+
+		graph_data['nodes.name'] = node_data['name']
+
+		self.graph_coll.update( graph_data, { "$set": { "nodes.$.opts": node_data['opts'] } } )
+
+		print 'Node updated successfully.'
+		
+		return node_data
+
+	def delete_node(self, graph_data, node_name):
+
+		self.graph_coll.update( graph_data, { "$pull": {"relations": {"parent": node_name } } } )
+
+		self.graph_coll.update( graph_data, { "$pull": { "nodes": { "name": node_name } } } )
+
+		print 'Node deleted successfully.'
+		
+		return node_name
+
+	def get_node(self, graph_data, node_name):
+
+		obj = self.graph_coll.find_one( graph_data, {"nodes": { "$elemMatch": { "name": node_name } }, '_id':0} )
+
+		return obj
+
+	def insert_child(self, graph_data, relation):
+
+		if len(relation['children']) == 1:
+			child = relation['children'][0]
+		else
+			child = relations["children"]
+
+		graph_data['relations.parent'] = relation["parent"]
+
+		try:                   
+    	coll.update( graph_data, { '$addToSet': {'relations.$.children': child } } )
+		except:
+			graph_data.pop('relations.parent')
+    	coll.update( graph_data, { '$addToSet': {'relations': relation } } )
+
+	def insert_relations(self, graph_data, relation_data, child=[]):
+		
+		if not child:
+			self.graph_coll.update( graph_data, { "$addToSet": { "relations": relation_data } } )
+		else:
+			if len(child) == 1:
+				child = child[0]
+			graph_data['relations.parent'] = relation_data['parent']
+			self.graph_coll.update( graph_data, { "$addToSet": { "relations.$.children": child } } )
+
+		print 'Relation inserted successfully.'
+		
+		return relation_data
+
+	def delete_relations(self, graph_data, node, child):
+		
+		graph_data['relations.parent'] = node
+		
+		self.graph_coll.update( graph_data, { "$pull": { "relations.$.children": child } } )
+
+		print 'Relation deleted successfully.'
+		
+		return child
+
+	def make_copy_of_model():
+
+		pass
+
+
+
+
+# try:
+# 	mongodb = MongoDB()
+# except Exception,e:
+# 	LOG.exception(e)
+

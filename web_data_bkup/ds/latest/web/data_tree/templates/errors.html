@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Error Rate</title>
+
+<script type="text/javascript">
+
+  var ws;
+
+  var count;
+  var limit;
+  var batch;
+
+  function init() {
+    
+    limit = 0;
+    count = 0;
+    batch = 0;
+
+    var refreshIntervalId;
+    // Connect to Web Socket
+
+    ws = new WebSocket("ws://localhost:8080/");
+    var arr = [];
+    // Set event handlers.
+    ws.onopen = function() {
+      console.log("onopen");
+      refreshIntervalId = setInterval(say_hello, 1000);
+
+    };
+    
+    ws.onmessage = function(e) {
+      // e.data contains received string.
+      output(e.data);
+    };
+    
+    ws.onclose = function() {
+      output("Server closed..!!");
+      clearInterval(refreshIntervalId);
+    };
+
+    ws.onerror = function(e) {
+      output("onerror");
+    };
+
+  }
+
+  function say_hello() {
+    ws.send(batch);
+  }
+  
+  function output(str) {
+
+    ++count;
+
+    var log = document.getElementById("log");
+
+    if (str.indexOf('Batch Number') == -1) {
+
+      --count;
+
+      var newElem = "<p id=error_" + count.toString() + ">" + str + "</p>";
+
+    }
+    else {
+
+      batch = str.match(/\d+/)[0];
+
+      var hLine = "<p id=line_" + count.toString() + "> ----------------------------------------------- </p>";
+      log.innerHTML = hLine + log.innerHTML;
+      var newElem = "<p id=batch_number_" + count.toString() + ">" + str + "</p>";
+
+    }
+
+    log.innerHTML = newElem + log.innerHTML;
+
+    if (str.indexOf('Batch Number') == -1) {
+
+      if (count > 10 && count%5 == 0) {
+        ++limit;
+      };
+
+      if (count > 10) {
+
+        var error_div = "error_" + ((count%5)+(limit*5)).toString();
+        var batch_div = "batch_number_" + ((count%5)+(limit*5)).toString();
+        var line_div = "line_" + ((count%5)+(limit*5)).toString();
+
+        error_element = document.getElementById(error_div);
+        batch_element = document.getElementById(batch_div);
+        line_element = document.getElementById(line_div);
+
+        error_element.parentNode.removeChild(error_element);
+        batch_element.parentNode.removeChild(batch_element);
+        line_element.parentNode.removeChild(line_element);
+      };
+
+    }
+  }
+
+</script>
+</head>
+<body onload="init();">
+  <div id="log" style="margin:10px; margin-left:5%;"></div>
+</body>
+</html>
+
+
+<!-- 
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <textarea id="output" row=3 cols=25></textarea>
+	  <script>
+	    var ws = new WebSocket('{{ ws_url }}');
+	    ws.onopen = function(e) {
+			    alert("got connected");
+			};
+	    ws.onmessage = function(e) {
+	      $('#output').append(e.data); 
+	    };
+	  </script>
+  </body>
+</html> -->
+
+<!-- 
+<html>
+   <head>
+	
+      <script type="text/javascript">
+         function WebSocketTest()
+         {
+            if ("WebSocket" in window)
+            {
+               alert("WebSocket is supported by your Browser!");
+               
+               // Let us open a web socket
+               var ws = new WebSocket('ws://localhost:8003/errors');
+				
+               ws.onopen = function()
+               {
+                  // Web Socket is connected, send data using send()
+                  ws.send("Message to send");
+                  alert("Message is sent...");
+               };
+				
+               ws.onmessage = function (evt) 
+               { 
+                  var received_msg = evt.data;
+                  alert("Message is received...");
+               };
+				
+               ws.onclose = function()
+               { 
+                  // websocket is closed.
+                  alert("Connection is closed..."); 
+               };
+            }
+            
+            else
+            {
+               // The browser doesn't support WebSocket
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+      </script>
+		
+   </head>
+   <body>
+   
+      <div id="sse">
+         <a href="javascript:WebSocketTest()">Run WebSocket</a>
+      </div>
+      
+   </body>
+</html> -->

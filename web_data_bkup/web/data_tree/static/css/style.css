@@ -1,0 +1,290 @@
+body
+{
+  padding:0px;
+  margin:0px;
+  width:100%;
+  height:100%;
+  overflow: auto;
+}
+#myDiagramDiv {
+  border: solid 1px black;
+  background-color:#F2F2F2;
+  height: 93vh;
+  width: 99vw;
+}
+
+input[type="text"], select {
+  display: inline;
+  margin: 5px;
+  margin-left: 0px;
+  font-family: sans-serif;
+  font-size: 18px;
+  appearance: none;
+  box-shadow: none;
+  border-radius: none;
+}
+input[type="text"], select:focus {
+  outline: none;
+}
+
+label {
+  display:block;
+  *display: block;     /* for IE7*/
+  zoom:1;              /* for IE7*/
+  float: 0px;
+  width: 170px;
+  margin-bottom: -12px;
+  font-weight: normal;
+}
+
+.submit-btn-class {
+  height: 36px;
+  margin-left: 30%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 116px;
+  background: #408c99;
+  font-family:Arial;
+  border: none;
+  color:#ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  text-decoration:none;
+  text-shadow:0px 1px 0px #3d768a;
+}
+
+.submit-btn-class:hover {
+  background-color: #415989;
+}
+
+.confirm-yes {
+  margin-left: 15%;
+}
+
+.confirm-no {
+  margin-left: 2%;
+}
+
+#edit-sumbit-btn {
+  height: 36px;
+  margin-left: 30%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 116px;
+  background: #408c99;
+  font-family:Arial;
+  border: none;
+  color:#ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  text-decoration:none;
+  text-shadow:0px 1px 0px #3d768a;
+}
+
+#edit-sumbit-btn:hover {
+    background-color: #415989;
+}
+
+.modalDialog {
+	position: fixed;
+	font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  color: #09C;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: rgba(0,0,0,0.8);
+	z-index: 99999;
+	opacity:0;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+	pointer-events: none;
+}
+
+.modalDialog:target {
+	opacity:1;
+	pointer-events: auto;
+}
+
+.modalDialog > div {
+	width: 300px;
+	position: relative;
+	margin: 2% auto;
+	padding: 5px 20px 13px 20px;
+	border-radius: 10px;
+	background: #fff;
+	background: -moz-linear-gradient(#fff, #999);
+	background: -webkit-linear-gradient(#fff, #999);
+	background: -o-linear-gradient(#fff, #999);
+}
+
+.confirm-box {
+  color: #000;
+  font-weight: normal;
+  
+}
+.confirm-box > div{
+  width: 350px;
+  position: relative;
+  margin-left: 2% auto;
+  border-radius: 10px;
+}
+
+.confirm-box > div > p{
+  text-align: center;
+}
+
+.close {
+	background: #606061;
+	color: #FFFFFF;
+	line-height: 25px;
+	position: absolute;
+	right: -12px;
+	text-align: center;
+	top: -10px;
+	width: 24px;
+	text-decoration: none;
+	font-weight: bold;
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+	-moz-box-shadow: 1px 1px 3px #000;
+	-webkit-box-shadow: 1px 1px 3px #000;
+	box-shadow: 1px 1px 3px #000;
+}
+
+.close:hover { background: #00d9ff; }
+
+#loading {
+   width: 100%;
+   height: 100%;
+   top: 0px;
+   visibility: hidden;
+   left: 0px;
+   position: fixed;
+   opacity: 0.5;
+   background-color: #fff;
+   z-index: -1;
+   text-align: center;
+}
+
+#loading-image {
+  position: absolute;
+  background: transparent;
+  top: 40%;
+  left: 45%;
+  z-index: 100;
+}
+
+.button-class {
+  background-color:#768d87;
+  border-radius:2px;
+  border:1px solid #566963;
+  display:inline-block;
+  margin-bottom: 5px;
+  cursor:pointer;
+  color:#ffffff;
+  font-family:Arial;
+  font-size:15px;
+  font-weight:bold;
+  padding:6px 14px;
+  text-decoration:none;
+  text-shadow:0px -1px 0px #2b665e;
+}
+.button-class:hover {
+  background-color:#6c7c7c;
+}
+
+.btn-disable
+{
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-enable
+{
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.text-box-disable {
+  pointer-events: none;
+}
+.start {
+  background-color: #3B9F7E;
+  color:#ECF2F0;
+}
+
+.loop {
+  background-color: #3B9F7E;
+  color:#ECF2F0;
+  display: none;
+}
+
+.create-graph-btn {
+  background-color:#dbe6c4;
+  border-radius:2px;
+  border:1px solid #b2b8ad;
+  display:inline-block;
+  cursor:pointer;
+  color:#757d6f;
+  margin-bottom: 5px;
+  font-family:Arial;
+  font-size:15px;
+  font-weight:bold;
+  padding:3px 8px;
+  text-decoration:none;
+  outline: 0 none;
+  text-shadow:0px 1px 0px #ced9bf;
+}
+.create-graph-btn:hover {
+  background-color:#9ba892;
+}
+.create-graph-btn:active {
+  position:relative;
+  top:1px;
+}
+
+form {
+  background: -webkit-linear-gradient(bottom, #CCCCCC, #EEEEEE 175px);
+  background: -moz-linear-gradient(bottom, #CCCCCC, #EEEEEE 175px);
+  background: linear-gradient(bottom, #CCCCCC, #EEEEEE 175px);
+  margin: 0 auto;
+  position: relative;
+  width: 270px;
+  margin: 5px;
+  font-family: Tahoma, Geneva, sans-serif;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: bold;
+  color: #09C;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid #999;
+  border: inset 1px solid #333;
+  -webkit-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+}
+form input[type="text"], input[type="number"], input[type="radio"], select {
+  margin: 10px;
+}
+form input[type="text"], input[type="number"], select {
+  display: inline;
+  margin: 10px;
+  font-family: sans-serif;
+  font-size: 18px;
+  appearance: none;
+  box-shadow: none;
+  border-radius: none;
+}
+form input[type="text"], input[type="number"], select:focus {
+  outline: none;
+}
+
+input[type="text"], input[type="number"], select {
+  width: 245px !important;
+}

@@ -1,0 +1,236 @@
+---------audio-server method1 to write to hdf5---------------------------------------
+def save_spect_frames_to_hdf5(self):
+
+    homeDir = "/home/ubuntu/wav"
+    subdirs = list(os.listdir(homeDir))
+    hf = h5py.File('../audio_spects.hdf5', 'a')
+    
+    counter = 0
+    for subdir in sorted(subdirs):
+      folder = homeDir+'/'+subdir
+      files = list(os.listdir(folder))
+      for j in files:
+        fn =  j
+        uniq_name = j.split('.')[0]
+        print uniq_name
+        fn = folder + '/' + fn
+        b = self.build_spect_frames(fn)
+        file_length = len(b)
+        if str(file_length) not in hf.keys():
+          hf.create_group(str(file_length))
+        if uniq_name not in hf[str(file_length)].keys():
+          hf[str(file_length)].create_dataset(uniq_name, data=np.array(b))
+        counter +=1
+      if counter >= 5000:
+        break;
+    hf.close()
+    print 'total files: ', counter
+    embed()
+----------------------------------------------------------
+
+---------------audio-server method2 to write to hdf5------------------------------------
+
+  def save_spect_frames_to_hdf5(self):
+
+    homeDir = "/home/ubuntu/wav"
+    subdirs = list(os.listdir(homeDir))
+	
+    name_index_dict = {}
+    len_dict = {}
+    dset_keys_dict = {}
+    sorted_files = {}
+    
+    counter = 0
+    for subdir in sorted(subdirs):
+      folder = homeDir+'/'+subdir
+      files = list(os.listdir(folder))
+      for j in files:
+        fn =  j
+        uniq_name = j.split('.')[0]
+        print 'uniq_name: ', uniq_name
+        fn = folder + '/' + fn
+        b = self.build_spect_frames(fn)
+        file_length = len(b)
+
+        name_index_dict.setdefault(file_length, {})
+        len_dict.setdefault(file_length, [])
+
+        if uniq_name not in name_index_dict[file_length].keys():
+          name_index_dict[file_length][uniq_name] = len(name_index_dict[file_length])
+          len_dict[file_length].append(b)
+        counter +=1
+        
+        if len(len_dict[file_length]) == 64:
+          chunk = 0
+          if file_length in dset_keys_dict:
+            chunk = dset_keys_dict[file_length]
+          dset_keys_dict[file_length] = chunk+1
+
+          group_key = str(file_length)
+          dset_key = str(chunk)
+
+          hf2 = h5py.File('../audio2.hdf5', 'a')
+          if group_key not in hf2.keys():
+            hf2.create_group(group_key)
+          if dset_key not in hf2[group_key].keys():
+            hf2[group_key].create_dataset(dset_key, data=np.array(len_dict[file_length]))
+            hf2[group_key][dset_key].attrs["files"] = json.dumps(name_index_dict[file_length])
+            print '-----------------------------------------------'
+            print 'writen into hdf5 file for group, key: ', group_key, dset_key, len(len_dict)
+            print '-----------------------------------------------'
+          else:
+            print 'key already exist'
+          hf2.close()
+          del len_dict[file_length]
+          del name_index_dict[file_length]
+      print 'Files processed: ', counter
+    name_index_dict = {}
+    len_dict = {}
+    dset_keys_dict = {}
+
+
+--------------------------------------audio-server read directly from file
+def __iter__(self):
+
+    _reversed = False
+
+    while True:
+        hf = h5py.File('../audio_spects.hdf5', 'r')
+        sorted_keys = sorted([int(key) for key in hf.keys()], reverse=_reversed)
+        for key in sorted_keys:
+            group_key = str(key)
+            container = hf[group_key]
+            dataset_keys = container.keys()
+            shuffle(dataset_keys)
+            for uniq_name in dataset_keys:
+                nparray = container[uniq_name][:]
+                yield { 'k': uniq_name,'audio':ca.array(nparray), 'tokens': self.build_tokens(uniq_name) }
+        else:
+            hf.close()
+            _reversed = not _reversed
+
+------------------------------------------------------audio-server load to memory then read
+
+  def __iter__(self):
+
+    _reversed = False
+
+    while True:
+        hf = h5py.File('../audio_spects.hdf5', 'r')
+        sorted_keys = sorted([int(key) for key in hf.keys()], reverse=_reversed)
+        hf.close()
+        while len(sorted_keys) > 0:
+            print len(sorted_keys)
+            key = sorted_keys.pop(0)
+            self.load_spect_frames_to_memory(key)
+            for uniq_name in self.dict.keys():
+                yield { 'k':uniq_name,'audio': self.get_dict(uniq_name)['audio'], 'tokens': self.get_dict(uniq_name)['tokens'] }
+        else:
+            sorted_keys = []
+            self.dict = {}
+            _reversed = not _reversed
+
+  def load_spect_frames_to_memory(self, key):
+    hf = h5py.File('../audio_spects.hdf5', 'r')
+    group_key = str(key)
+    container = hf[group_key]
+    dataset_keys = container.keys()
+    shuffle(dataset_keys)
+    for uniq_name in dataset_keys:
+        self.dict.setdefault(uniq_name,{})
+        self.dict[uniq_name]['audio'] = container[uniq_name][:]
+        self.dict[uniq_name]['tokens'] = self.build_tokens(uniq_name)
+
+--------------------------------------------------------------------------------------audio-server read in chunks
+
+  def __iter__(self):
+
+    _reversed = False
+    chunk_size = 128
+    while True:
+      hf = h5py.File('../audio_spects_gzip.hdf5', 'r')
+      sorted_keys = sorted([int(key) for key in hf.keys()], reverse=_reversed)
+      for key in sorted_keys:
+        group_key = str(key)
+        container = hf[group_key]
+        dataset_keys = container.keys()
+        shuffle(dataset_keys)
+        for i in range(int(round(float(len(dataset_keys))/float(chunk_size)))):
+          start = i*chunk_size
+          end = start+chunk_size
+          chunked_files = dataset_keys[start:end]
+          if len(chunked_files) < chunk_size:
+            chunked_files = chunked_files + dataset_keys[0:chunk_size-len(chunked_files)]
+          yield [{'k': uniq_name,'audio': ca.array(container[uniq_name][:]), 'tokens': self.build_tokens(uniq_name)} for uniq_name in chunked_files]
+      else:
+        hf.close()
+        _reversed = not _reversed
+
+------------------------------------------------------------------------------------------DFS Algo-------------------
+
+  # DFS algo: video - https://www.youtube.com/watch?v=rKQaZuoUR4M
+  # DFS algo - http://www.algolist.net/Algorithms/Graph/Undirected/Depth-first_search
+  def has_cycle(self):
+
+    not_visited_set = set()
+    partialy_visited_set = set()
+    visited_set = set()
+
+    for g_name, g in self.graph.iteritems():
+      for n_name, node in g.nodes.iteritems():
+        not_visited_set.add(node)
+
+    while len(not_visited_set) > 0:
+      current = next(iter(not_visited_set))
+      if self.dfs(current, not_visited_set, partialy_visited_set, visited_set) == True:
+        return True
+    return False  
+
+  def dfs(self, current, not_visited_set, partialy_visited_set, visited_set):
+    self.move_vertex(current, not_visited_set, partialy_visited_set)
+    for child in current.children_rel:
+      neighbor = current.evaluate_link(child)
+      if neighbor in visited_set:
+        continue
+      if neighbor in partialy_visited_set:
+        print 'The Graph is cyclic.'
+        print "---> ", neighbor.graph.name +'-'+neighbor.name
+        return True
+      if self.dfs(neighbor, not_visited_set, partialy_visited_set, visited_set) == True:
+        print "---> ", neighbor.graph.name +'-'+neighbor.name
+        return True
+
+    self.move_vertex(current, partialy_visited_set, visited_set)
+    return False
+
+  def move_vertex(self, vertex, source_set, destination_set):
+    source_set.remove(vertex)
+    destination_set.add(vertex)
+
+-------------------------------------------------------topological sort
+  def top_sort(self):
+
+    if self.has_cycle():
+      return
+
+    parent_list = []
+    sorted_list = []
+
+    for g_name, g in self.graph.iteritems():
+      for n_name, node in g.nodes.iteritems():
+        if node.parents_rel == []:
+          parent_list.append(node)
+        node.temp_parent_rel = list(node.parents_rel)
+       
+    while parent_list != []:
+      parent_node = parent_list.pop(0)
+      sorted_list.append(parent_node)
+      for child in parent_node.children_rel:
+        child_node = parent_node.evaluate_link(child)     
+        child_node.temp_parent_rel.remove([parent_node.graph.name,parent_node.name])
+           
+        if child_node.temp_parent_rel == []:
+          parent_list.append(child_node)
+ 
+    return sorted_list
+

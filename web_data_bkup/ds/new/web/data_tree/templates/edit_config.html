@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<h4 style="text-align:center;" >{{class}}</h4>
+<form id="editConfigForm" action="Javascript:updateNodeConfig()" enctype='application/json'>
+	<input type="text" name="graphname" value="{{graphname}}" style="display:none;">
+	<input type="text" name="nodename" value="{{name}}" style="display:none;">
+	<input type="text" name="nodeclass" value="{{class}}" style="display:none;">
+	{% if class != "DataNode" and class != "ConvolutionNode" and class != "VectorsToMatrixNode" %}
+		<label for="fan_in">Fan In: </label>
+		<input type="number" name="fan_in" min="0" value="{{opts.fan_in}}" placeholder="fan_in">
+		<label for="fan_out">Fan Out: </label>
+		<input type="number" name="fan_out" min="0" value="{{opts.fan_out}}" placeholder="fan_out">
+	{% endif %}
+	{% if class == "WeightNode" or class == "OnesNode" or class == "FilterNode"%}
+		{% if class == "WeightNode" %}
+			<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+			{% if opts.dropout %}
+				<input type="radio" name="dropout" value="True" checked> True
+				<input type="radio" name="dropout" value="False"> False
+			{% else %}
+				<input type="radio" name="dropout" value="True"> True
+				<input type="radio" name="dropout" value="False" checked> False
+			{% endif %}
+		{% endif %}
+		{% if class == "FilterNode" %}
+			<label for="n_channels">NChannels </label>
+			<input type="number" name="n_channels" min="0" value="{{opts.n_channels}}" placeholder="n_channels">
+			<label for="n_filters">NFilters: </label>
+			<input type="number" name="n_filters" min="0" value="{{opts.n_filters}}" placeholder="n_filters">
+			<label for="filter_shape">Filter Shape: </label>
+			<input pattern="^([0-9]+)x([0-9]+)$" type="text" name="filter_shape" value="{{opts.filter_shape|joinby:'x'}}" placeholder=" example; 28x28 ">
+		{% endif %}
+		<label for="weight_update_status" style="padding-top:2px !important;">Weight Update Status: </label>
+		{% if opts.weight_update_status %}
+			<input type="radio" name="weight_update_status" value="True" checked> True
+			<input type="radio" name="weight_update_status" value="False"> False 
+		{% else %}
+			<input type="radio" name="weight_update_status" value="True"> True
+			<input type="radio" name="weight_update_status" value="False" checked> False 
+		{% endif %}
+		<label for="weight_decay">Weight Decay: </label>
+		<input type="number" name="weight_decay" min="0" max="1" step="0.0001" value="{{opts.weight_decay}}" placeholder="weight_decay"> 
+		<label for="momentum">Momentum: </label>
+		<input type="number" name="momentum" min="0" max="1" step="0.0001" value="{{opts.momentum}}" placeholder="Momentum"> 
+		<label for="alpha">Alpha: </label>
+		<input type="number" name="alpha" min="0" max="1" step="0.0001" value="{{opts.alpha}}" placeholder="Alpha"> 
+		<label for="init_scaler">Init Scaler: </label>
+		{% if opts|isDict:opts.init_scaler %}
+			<input type="number" style="width:110px !important; display:inline !important; margin-right:1px !important;" value="{{opts.init_scaler.scale}}" name="init_scale_value" min="0" max="10" step="0.000001" placeholder="scale">
+			<input type="text" style="width:110px !important; display:inline !important; margin-left:0px !important;" name="init_scale_type" value="{{opts.init_scaler.type}}" placeholder="Scalar type">
+		{% else %}
+			<input type="number" style="width:110px !important; display:inline !important; margin-right:1px !important;" value="{{opts.init_scaler}}" name="init_scale_value" min="0" max="10" step="0.000001" placeholder="scale">
+			<input type="text" style="width:110px !important; display:inline !important; margin-left:0px !important;" name="init_scale_type" placeholder="Scalar type"> 
+			<br>
+		{% endif %}
+	{% elif class == "LossNode" or class == "FunctionNode" or class == "AttentionNode" %}
+		{% if class != "LossNode" %}
+			<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+			{% if opts.dropout %}
+				<input type="radio" name="dropout" value="True" checked> True
+				<input type="radio" name="dropout" value="False"> False
+			{% else %}
+				<input type="radio" name="dropout" value="True"> True
+				<input type="radio" name="dropout" value="False" checked> False
+			{% endif %}
+			<label for="reform" style="padding-top:2px !important;">Reform: </label>
+			{% if opts.reform %}
+				<input type="radio" name="reform" value="True" checked> True
+				<input type="radio" name="reform" value="False"> False
+			{% else %}
+				<input type="radio" name="reform" value="True"> True
+				<input type="radio" name="reform" value="False" checked> False
+			{% endif %}
+		{% endif %}
+		<label for="a_func">Function Name: </label>
+		<input type="text" name="a_func" value="{{opts.a_func.name}}" placeholder="a_func">
+	{% elif class == "DataNode" %}
+		<label for="a_func">Function Name: </label>
+		<input type="text" name="a_func" value="{{opts.a_func.name}}" placeholder="a_func">
+		<label for="a_func_param">Function Param: </label>
+		{% if opts.a_func.params %}
+			<input type="text" name="a_func_param" value="{{opts.a_func.params|get_item:opts.a_func.name}}" placeholder="a_func_param">
+		{% else %}
+			<input type="text" name="a_func_param" value="" placeholder="a_func_param">
+		{% endif %}
+		<label for="image_shape">Image Shape: </label> 
+		<input pattern="^([0-9]+)x([0-9]+)$" type="text" name="image_shape" value="{{opts.image_shape|joinby:'x'}}" placeholder=" example; 28x28 ">
+		<label for="skip_grad" style="padding-top:2px !important;">Skip Grad: </label>
+		{% if opts.skip_grad %}
+			<input type="radio" name="skip_grad" value="True" checked> True
+			<input type="radio" name="skip_grad" value="False"> False
+		{% else %}
+			<input type="radio" name="skip_grad" value="True"> True
+			<input type="radio" name="skip_grad" value="False" checked> False
+		{% endif %}
+	{% elif class == "ConvolutionNode" %}
+		<label for="no_padding" style="padding-top:2px !important;">No Padding: </label>
+		{% if opts.no_padding %}
+			<input type="radio" name="no_padding" value="True" checked> True
+			<input type="radio" name="no_padding" value="False"> False
+		{% else %}
+			<input type="radio" name="no_padding" value="True"> True
+			<input type="radio" name="no_padding" value="False" checked> False
+		{% endif %}
+	{% endif %}
+	{% if class != "VectorsToMatrixNode" %}
+		<input id="sumbit-btn" type="submit" value="Update">
+	{% endif %}
+</form>

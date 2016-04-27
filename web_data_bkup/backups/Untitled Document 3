@@ -1,0 +1,386 @@
+from IPython import embed
+import Pyro4
+import os
+import numpy as np
+import random
+
+from copy import deepcopy
+
+import sys
+sys.path.append('../web')
+sys.path.append('../old_awok_data_science')
+
+from graph import MasterGraph, Graph
+from data_loader import MnistServer
+from word_weight_mapper import WordWeightMapper
+
+os.environ['CUDARRAY_BACKEND'] = 'cuda'
+import cudarray as ca
+
+class ServerAPI():
+
+	def __init__(self):
+
+		self.session_id = None
+		self.master_graphs = {}
+		self.observation_server = MnistServer({})
+		self.word_weight_mapper = WordWeightMapper()
+		self.server_manager = Pyro4.Proxy("PYRONAME:server_manager")
+
+	def create_master_graphs(self, key):
+
+		master_graph = MasterGraph({'iterations':50000000,'time_frame':2,'batch_size':1,'log_grad':False,'log_activation':False,'log_error':True, 'session_id':key})
+		master_graph.observation_server = self.observation_server
+		master_graph.word_weight_mapper = self.word_weight_mapper
+
+		self.master_graphs[key] = master_graph
+
+	def create_graph(self, mold, recreation=False):
+
+		if mold['session_id'] not in self.master_graphs:  #or (self.session_id != "" and mold['session_id'] != self.session_id)
+			self.create_master_graphs(mold['session_id'])
+
+		self.session_id = mold["session_id"]
+		
+		if not recreation:
+			graph_data = deepcopy(mold)
+			graph_data['nodes'], graph_data['relations'] = [], []
+
+			self.mongo.insert_graph(graph_data)
+
+			if self.active_model:
+				self.mongo.add_graph_to_model({'name':self.active_model, 'username':graph_data['username'], 'session_id':graph_data['session_id']}, graph_data['name'])
+
+		Graph({'name':mold['name'],'type':mold['type'],'master_graph':self.master_graphs[self.session_id],'batch_size':1}).build_graph({'batch_size':1,'master_graph':self.master_graphs[self.session_id],'name':mold['name'],'mold':mold})
+
+	def add_node_to_graph(self, graph_name, node, recreation=False):
+
+		graph_data, node_data = {}, deepcopy(node)
+
+		if node['class'] == "TargetNode" or node['class'] == "DataNode":
+
+			_iter = self.master_graphs[self.session_id].observation_server.__iter__()
+
+			observation = _iter.next()
+
+			y_vec = observation['digit-label']
+			x = observation['image']
+			x.shape = (256,784)
+			x = ca.array(x) / 255.0
+			y_vec  = ca.array(y_vec)
+			
+			if node['class'] == "TargetNode":
+				node['opts']['y'] = y_vec
+
+			elif node['class'] == "DataNode":
+				node['opts']['key'] = x
+
+		if not recreation:
+
+			graph_data['name'], graph_data['session_id'] = graph_name, self.session_id
+			
+			self.mongo.insert_node(graph_data, node_data)
+
+		self.master_graphs[self.session_id].graph[graph_name].add_node(node)
+
+	def add_child_to_node(self, graph_name, relations, recreation=False):
+
+		if not recreation:
+
+			graph_data, relation_data = {}, deepcopy(relations)
+			graph_data['name'], graph_data['session_id'] = graph_name, self.session_id
+
+			if self.master_graphs[self.session_id].graph[graph_name].nodes[relations['parent']].children_rel:
+				self.mongo.insert_relations(graph_data, relation_data, relations['children'])
+			else:
+				self.mongo.insert_relations(graph_data, relation_data)
+
+		self.master_graphs[self.session_id].graph[graph_name].add_children(relations)		
+
+	def remove_graph(self, graph_name):
+
+		self.master_graphs[self.session_id].graph[graph_name].destroy_graph()
+		self.mongo.delete_graph({'name':graph_name, 'session_id':self.session_id})
+
+		if self.active_model:
+			self.mongo.remove_graph_from_model(self.active_model, graph_name)
+	
+	def remove_node_from_graph(self, graph_name, node_name):
+
+		parents = self.master_graphs[self.session_id].graph[graph_name].nodes[node_name].parents_rel
+
+		for parent in parents:
+			parent_node = parent[1]
+			if parent[0] == graph_name:
+				child = node_name
+			else:
+				child = [graph_name, node_name]
+
+			self.mongo.delete_relations({'name':parent[0], 'session_id':self.session_id}, parent_node, child)
+
+		self.mongo.delete_node({'name':graph_name, 'session_id':self.session_id}, node_name)
+
+		self.master_graphs[self.session_id].graph[graph_name].nodes[node_name].destroy()
+		
+
+	def remove_child(self, graph_name, node_name, child):
+		self.master_graphs[self.session_id].graph[graph_name].nodes[node_name].remove_child(child)
+		self.mongo.delete_relations({'name':graph_name, 'session_id':self.session_id}, node_name, child)
+
+	def remove_parent(self, graph_name, node_name, parent):
+		self.master_graphs[self.session_id].graph[graph_name].nodes[node_name].remove_parent(parent)
+
+	def create_new_model(self, model_data):
+
+		self.allowEdit = True
+
+		self.active_model = model_data['name']
+
+		if self.master_graphs:
+			self.master_graphs[model_data["session_id"]].reset_except_origin()
+		
+		model_data['graphs'] = []
+
+		self.mongo.insert_model(model_data)
+
+	def get_node_config(self, mold, node_name):
+
+		data = self.mongo.get_node(mold, node_name)
+
+		try:
+			mold = data['nodes'][0]
+		except:
+			return {}
+
+		return mold
+
+	def update_node_config(self, graph_data, node):
+
+		self.mongo.update_node(graph_data, node)
+
+		return graph_data
+
+	def get_all_model_names(self):
+
+		objects = self.mongo.get_all_models()
+		models = []
+
+		for obj in objects:
+			models.append(obj['name'])
+
+		return {"models":models, "active_model":self.active_model, "allowEdit":self.allowEdit}
+
+	def get_session_id(self):
+		return self.session_id
+
+	def make_copy_of_model(self, data):
+
+		model = self.mongo.get_model_by_name(self.active_model)
+
+		graphs = self.mongo.get_many_graphs(model['graphs'], model['session_id'])
+
+		copy_graphs = []
+
+		new_graph_names = []
+		names_dict = {}
+
+		for graph in graphs:
+			name = graph['name']
+			new_g_name = name + '_' + data['name']
+			splitedName = name.split('_')
+			if splitedName[-1] == 'origin':
+				new_g_name = '_'.join(splitedName[:-1]+[data['name']]+[splitedName[-1]])
+
+			graph['name'] = new_g_name
+			graph['username'] = data['username']
+			graph['session_id'] = data['session_id']
+			
+			names_dict[name] = new_g_name
+
+			new_graph_names.append(new_g_name)
+
+			copy_graphs.append(graph)
+		
+		for new_graph in copy_graphs:
+			relations = new_graph['relations']
+			for relation in relations:
+				for child in relation['children']:
+					if type(child) is list:
+							child[0] = names_dict[child[0]]
+
+			self.mongo.insert_graph(new_graph)
+
+		data['graphs'] = new_graph_names
+
+		self.mongo.insert_model(data)
+
+		self.recreate_diagram(data['name'], data['username'], data['session_id'])
+
+		return data
+
+	def show_relations(self):
+
+		if self.master_graphs:
+			for g in self.master_graphs.graph:
+				print 'Graph: --> ', g
+				print '========================================='
+				for n in self.master_graphs.graph[g].nodes:
+					print 'Node: --> ', n
+					parents = self.master_graphs.graph[g].nodes[n].parents_rel
+					childs = self.master_graphs.graph[g].nodes[n].children_rel
+					print 'Parent Nodes: --> ', parents
+					print 'Child Nodes: --> ', childs
+					print '-----------------------------------------'
+
+	def get_nodes_and_links(self, session_key):
+
+		nodes, links = [], []
+		if self.master_graphs.has_key(session_key):
+			for g in self.master_graphs[session_key].graph:
+				nodes.append({"key":g, "isGroup":True})
+				for n in self.master_graphs[session_key].graph[g].nodes:
+					nodes.append({"key":n, "group":g, "size":"60 60"})
+					parents = self.master_graphs[session_key].graph[g].nodes[n].parents_rel
+					childs = self.master_graphs[session_key].graph[g].nodes[n].children_rel
+					for child in childs:
+						if type(child) is list:
+							links.append({"from":n, "to":child[1]})
+						else:
+							links.append({"from":n, "to":child})
+		
+		return {"nodes":nodes, "connections":links, "active_model":self.active_model, "allowEdit":self.allowEdit}
+
+	def recreate_diagram(self, model_name, username, session_id):
+
+		self.active_model = model_name
+		self.allowEdit = False
+		
+		if self.master_graphs:
+			self.master_graphs[session_id].reset_with_origin()
+
+		model = self.mongo.get_model_by_name(self.active_model)
+
+		if username ==  model['username']:
+			self.allowEdit = True
+
+		graphs = self.mongo.get_many_graphs(model['graphs'], model['session_id'])
+
+		for graph in graphs:
+			graph_object = {'name':graph['name'],'type': graph['type'], 'session_id':session_id,'size':graph['size']}
+			self.create_graph(graph_object, recreation=True)
+
+			for node in graph['nodes']:
+				self.add_node_to_graph(graph['name'], node, recreation=True)
+
+		for graph in graphs:
+			relations = graph['relations']
+			for relation in relations:
+				for child in relation['children']:
+					mold = {'parent': relation['parent'], 'children':[child]}
+					self.add_child_to_node(graph['name'], mold, recreation=True)
+
+	def start_graph(self):
+
+		model = self.mongo.get_model_by_name(self.active_model)
+
+		graphs = self.mongo.get_many_graphs(model['graphs'], model['session_id'])
+
+		_iter = self.master_graphs[self.session_id].observation_server.__iter__()
+
+		i = 0
+
+		while i < self.master_graphs[self.session_id].iterations:
+			
+			self.master_graphs[self.session_id].reset_except_origin()
+
+			observation = _iter.next()
+
+			y_vec = observation['digit-label']
+			x = observation['image']
+			x.shape = (256,784)
+			x = ca.array(x) / 255.0
+			y_vec  = ca.array(y_vec)
+
+			for graph in graphs:
+				if graph['name'].split('_')[-1] != 'origin':
+					mold = {'name':graph['name'],'type': graph['type'], 'session_id':self.session_id,'size':graph['size']}
+					Graph({'name':mold['name'],'type':mold['type'],'master_graph':self.master_graphs[self.session_id],'batch_size':1}).build_graph({'batch_size':1,'master_graph':self.master_graphs[self.session_id],'name':mold['name'],'mold':mold})
+
+					for node in graph['nodes']:
+						if node['class'] == "TargetNode":
+							node['opts']['y'] = y_vec
+
+						elif node['class'] == "DataNode":
+							node['opts']['key'] = x
+						self.master_graphs[self.session_id].graph[graph['name']].add_node(node)
+
+					relations = graph['relations']
+					for relation in relations:
+						for child in relation['children']:
+							mold = {'parent': relation['parent'], 'children':[child]}
+							self.master_graphs[self.session_id].graph[graph['name']].add_children(mold)
+			
+			self.master_graphs[self.session_id].forward()
+			self.master_graphs[self.session_id].backward()
+			self.master_graphs[self.session_id].update_weights()
+			self.master_graphs[self.session_id].print_error(i)
+
+			i += 1
+
+	def create_static_nodes(self):
+
+		_iter = self.master_graphs[self.session_id].observation_server.__iter__()
+		observation = _iter.next()
+		
+		y_vec = observation['digit-label']
+		x = observation['image']
+		x.shape = (256,784)
+		x = ca.array(x) / 255.0
+		y_vec  = ca.array(y_vec)
+
+		self.master_graphs[self.session_id].graph['ff_origin'].add_node({'class':'WeightNode','name':'n5','opts':{'fan_in':900,'fan_out':10,'weight_update_status': True,'weight_decay':0.99999,'momentum':0.0,'alpha':0.05,'init_scaler':0.1}})
+		self.master_graphs[self.session_id].graph['ff_origin'].add_node({'class':'WeightNode','name':'n10','opts':{'dropout':False,'fan_in':784,'fan_out':900,'weight_update_status': True,'weight_decay':0.99999,'momentum':0.2,'alpha':0.05,'init_scaler':4.1}})  
+
+
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'LossNode','name': 'n1','opts':{'a_func':{'name':'classifier'},'fan_in':1,'fan_out':1}})
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'TargetNode','name': 'n2','opts':{'fan_in':1,'fan_out':1,'y':y_vec}})
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'FunctionNode','name':'n3','opts':{'a_func':{'name':'softmax'},'fan_in':2400,'fan_out':2400}})
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'DotProductNode','name':'n4','opts':{'fan_in':100,'fan_out':100}})   
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'DataNode','name':'n12','opts':{'key':x,'img_shape':(28,28),'skip_grad': True,'a_func':{'name':'scalar','params':{'scalar':1.0}}}})
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'FunctionNode','name':'n6','opts':{'dropout':True,'a_func':{'name':'sin'},'fan_in':100,'fan_out':100}})
+		self.master_graphs[self.session_id].graph['ff'].add_node({'class':'DotProductNode','name':'n7','opts':{'fan_in':100,'fan_out':100}})
+
+
+
+		self.master_graphs[self.session_id].graph['ff'].add_children({'parent':'n1','children':['n2','n3']})
+		self.master_graphs[self.session_id].graph['ff'].add_children({'parent':'n3','children':['n4']})
+
+		self.master_graphs[self.session_id].graph['ff'].add_children({'parent':'n4','children':['n6',['ff_origin','n5']]})
+
+		self.master_graphs[self.session_id].graph['ff'].add_children({'parent':'n6','children':['n7']})
+
+		self.master_graphs[self.session_id].graph['ff'].add_children({'parent':'n7','children':['n12',['ff_origin','n10']]})
+
+	import psutil
+
+	def stop_process():
+
+		PROCNAME = "python.exe"
+
+		for proc in psutil.process_iter():
+			# check whether the process name matches
+			if proc.name == PROCNAME:
+				print proc
+				embed()
+				#proc.kill()
+
+
+apiserver = ServerAPI()
+daemon = Pyro4.Daemon()               	# make a Pyro daemon
+ns = Pyro4.locateNS()                  	# find the name server
+uri = daemon.register(apiserver)   	# register the greeting maker as a Pyro object
+ns.register("apiserver", uri)   		# register the object with a name in the name server
+
+print("Ready...")
+daemon.requestLoop() 
+

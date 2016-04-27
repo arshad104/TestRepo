@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<form id="configForm" action="Javascript:addNodeToGraph()" enctype='application/json'>
+	<label for="nodename">Node Name: </label>
+	<input type="text" name="nodename" id="node-name" placeholder="Node Name"> <br>
+	{% if nodeClass != "DataNode" and nodeClass != "ConvolutionNode" and nodeClass != "VectorsToMatrixNode" %}
+		<label for="fan_in">Fan In: </label>
+		<input type="number" name="fan_in" min="0" placeholder="fan_in"> <br>
+		<label for="fan_out">Fan Out: </label>
+		<input type="number" name="fan_out" min="0" placeholder="fan_out"> <br>
+	{% endif %}
+
+	{% if nodeClass == "WeightNode" or nodeClass == "OnesNode" or nodeClass == "FilterNode"%}
+		{% if nodeClass == "WeightNode" %}
+			<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+			<input type="radio" name="dropout" value="True"> True
+			<input type="radio" name="dropout" value="False"> False <br>
+		{% endif %}
+		{% if nodeClass == "FilterNode" %}
+			<label for="n_channels">NChannels </label>
+			<input type="number" name="n_channels" min="0" placeholder="n_channels"> <br>
+			<label for="n_filters">NFilters: </label>
+			<input type="number" name="n_filters" min="0" placeholder="n_filters"> <br>
+			<label for="filter_shape">Filter Shape: </label> 
+			<input pattern="^([0-9]+)x([0-9]+)$" type="text" name="filter_shape" placeholder=" example; 28x28 "> <br>
+			<!-- <input type="number" style="width:100px !important; display:inline !important; margin-right:0px !important;" name="filter_shape_x" placeholder="x value"> 
+			<input type="number" style="width:100px !important; display:inline !important; margin-left:1px !important;" name="filter_shape_y" placeholder="y value"><br> -->
+		{% endif %}
+		<label for="weight_update_status" style="padding-top:2px !important;">Weight Update Status: </label>
+		<input type="radio" name="weight_update_status" value="True"> True
+		<input type="radio" name="weight_update_status" value="False"> False <br>
+		<label for="weight_decay">Weight Decay: </label>
+		<input type="number" name="weight_decay" min="0" max="1" step="0.0001" placeholder="weight_decay"> <br>
+		<label for="momentum">Momentum: </label>
+		<input type="number" name="momentum" min="0" max="1" step="0.0001" placeholder="Momentum"> <br>
+		<label for="alpha">Alpha: </label>
+		<input type="number" name="alpha" min="0" max="1" step="0.0001" placeholder="Alpha"> <br>
+		<label for="init_scaler">Init Scaler: </label>
+		<input type="text" style="width:100px !important; display:inline !important; margin-right:0px !important;" name="init_scale_type" placeholder="scalar type"> 
+		<input type="number" style="width:100px !important; display:inline !important; margin-left:1px !important;" value="0.0" name="init_scale_value" min="0" max="10" step="0.000001" placeholder="scale"> <br>
+
+	{% elif nodeClass == "LossNode" or nodeClass == "FunctionNode" or nodeClass == "AttentionNode" %}
+		{% if nodeClass != "LossNode" %}
+			<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+			<input type="radio" name="dropout" value="True"> True
+			<input type="radio" name="dropout" value="False"> False <br>
+			<label for="reform" style="padding-top:2px !important;">Reform: </label>
+			<input type="radio" name="reform" value="True"> True
+			<input type="radio" name="reform" value="False"> False <br>
+		{% endif %}
+		<label for="a_func">Function Name: </label>
+		<input type="text" name="a_func" placeholder="a_func"> <br>
+
+	{% elif nodeClass == "DataNode" %}
+		<label for="a_func">Function Name: </label>
+		<input type="text" name="a_func" placeholder="a_func"> <br>
+		<label for="a_func_param">Function Param: </label>
+		<input type="text" name="a_func_param" placeholder="a_func_param"> <br>
+		<!-- <input pattern="^([A-Za-z0-9_]+):([A-Za-z0-9_]+)$" type="text" name="a_func_param" placeholder="e.g; param1:value, param1:vale"> <br> -->
+		<label for="image_shape">Image Shape: </label> 
+		<input pattern="^([0-9]+)x([0-9]+)$" type="text" name="image_shape" placeholder=" example; 28x28 "> <br>
+		<label for="skip_grad" style="padding-top:2px !important;">Skip Grad: </label>
+		<input type="radio" name="skip_grad" value="True"> True
+		<input type="radio" name="skip_grad" value="False"> False <br>
+
+	{% elif nodeClass == "ConvolutionNode" %}
+		<label for="no_padding" style="padding-top:2px !important;">No Padding: </label>
+		<input type="radio" name="no_padding" value="True"> True
+		<input type="radio" name="no_padding" value="False"> False <br>
+	{% endif %}
+
+	<input id="sumbit-btn" type="submit" value="Submit">
+
+</form>

@@ -1,0 +1,51 @@
+function changeButtonsCss() {
+
+  start = !start;
+
+  var startBtn = document.getElementById("start-stop-btn");
+ // var loopBtn = document.getElementById("loop-btn");
+
+  // if (!loop || start) {
+  //   loopBtn.style.display = "none";
+  // }
+  // else if (!start) {
+  //   loopBtn.style.display = "inline";
+  // }
+  
+  
+  // loopBtn.value = start ? "Loop Running" : "Start Loop" ;
+  // loopBtn.style.background = start ? "#B54D4D" : "#3B9F7E";
+  // loopBtn.style.cursor = start ? "default" : "pointer";
+  // loopBtn.disabled = start;
+
+  startBtn.value = start ? "Start" : "Stop";
+  startBtn.style.background = start ? "#3B9F7E" : "#B54D4D";
+
+  // loopBtn.style.background = start ? "#B54D4D":"#3B9F7E";
+  // loopBtn.value = start ? "Loop Running" : "Start Loop";
+  // loopBtn.style.cursor = loop ? "none" : "auto";
+}
+
+// function startStopLoop(){
+
+//   loop = !loop;
+
+//   var loopBtn = document.getElementById("loop-btn");
+//   loopBtn.value = loop ? "Start Loop" : "Loop Running";
+//   loopBtn.style.background = loop ? "#3B9F7E" : "#B54D4D";
+//   loopBtn.style.cursor = loop ? "none" : "auto";
+//   loopBtn.disabled = !loop;
+
+//   $.ajax({
+//     type: "GET",  
+//     url: "http://localhost:8000/activity",
+//     data: { "loop": !loop },
+//     success: function(response){  
+
+//     },
+//     error: function(XMLHttpRequest, textStatus, errorThrown) { 
+//       console.log(XMLHttpRequest);
+//     }       
+//   });
+
+// }

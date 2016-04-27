@@ -1,0 +1,5 @@
+Django==1.6.5
+pymongo==3.2
+simplejson==3.8.1
+ipython==4.0.3
+Pyro4==4.41

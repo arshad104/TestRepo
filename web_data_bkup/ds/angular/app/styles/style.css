@@ -1,0 +1,199 @@
+body
+{
+  padding:0px;
+  margin:0px;
+  overflow: auto;
+  width:100%;
+  height:100%;
+}
+#myDiagramDiv {
+  border: solid 1px black;
+  background-color:#F2F2F2;
+  height: 93vh;
+  width: 100%;
+}
+
+
+input, select {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display:inline-block;
+    *display: inline;     /* for IE7*/
+    zoom:1;              /* for IE7*/
+    vertical-align:middle;
+    margin-left:5px
+}
+
+label {
+    display:inline-block;
+    *display: inline;     /* for IE7*/
+    zoom:1;              /* for IE7*/
+    float: left;
+    padding-top: 5px;
+    text-align: right;
+    width: 170px;
+    font-weight: normal;
+}
+
+#sumbit-btn {
+	 height: 36px;
+   margin-left: 40%;
+   margin-top: 25px;
+   width: 116px;
+}
+
+.modalDialog {
+	position: fixed;
+	font-family: Arial, Helvetica, sans-serif;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: rgba(0,0,0,0.8);
+	z-index: 99999;
+	opacity:0;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+	pointer-events: none;
+}
+
+
+.modalDialog:target {
+	opacity:1;
+	pointer-events: auto;
+}
+
+.modalDialog > div {
+	width: 500px;
+	position: relative;
+	margin: 2% auto;
+	padding: 5px 20px 13px 20px;
+	border-radius: 10px;
+	background: #fff;
+	background: -moz-linear-gradient(#fff, #999);
+	background: -webkit-linear-gradient(#fff, #999);
+	background: -o-linear-gradient(#fff, #999);
+}
+
+.close {
+	background: #606061;
+	color: #FFFFFF;
+	line-height: 25px;
+	position: absolute;
+	right: -12px;
+	text-align: center;
+	top: -10px;
+	width: 24px;
+	text-decoration: none;
+	font-weight: bold;
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+	-moz-box-shadow: 1px 1px 3px #000;
+	-webkit-box-shadow: 1px 1px 3px #000;
+	box-shadow: 1px 1px 3px #000;
+}
+
+.close:hover { background: #00d9ff; }
+
+#loading {
+   width: 100%;
+   height: 100%;
+   top: 0px;
+   visibility: hidden;
+   left: 0px;
+   position: fixed;
+   opacity: 0.7;
+   background-color: #fff;
+   z-index: 99;
+   text-align: center;
+}
+
+#loading-image {
+  position: absolute;
+  background: transparent;
+  top: 40%;
+  left: 45%;
+  z-index: 100;
+}
+
+
+/*#loginpage {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  max-height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0 auto;
+  background-size:cover;
+}
+
+.login-container {
+  position: fixed;
+  width: 445px;
+  height: 320px;
+  left: 35%;
+  top: 25%;
+  background: transparent;
+  border: no-border;
+ }
+#loginerror {
+ color: #e20000;
+ line-height:2.5;
+ width: 97%;
+ text-align:right;
+ margin-bottom: -2.5em;
+}
+.login-container  > form {
+    margin-top: 30px;
+ }
+.login-container > form > label {
+    color: #555;
+    display: inline-block;
+    margin-left: 18px;
+    padding-top: 10px;
+    font-size: 14px;
+}
+.login-container > form > input {
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+.login-container > form >  input[type=text], input[type=email],
+  input[type=password] {
+    color: white;
+    background: transparent;
+    margin: 10px;
+    width: 420px;
+    height: 35px;
+    border: 1px solid #c7d0d2;
+    border-radius: 5px;
+    border-bottom: 2px solid #c7d0d2;
+    text-indent: 10px;
+
+  }
+.login-container > form >  #lower {
+    width: 100%;
+    height: 69px;
+    text-align: center;
+    outline: none;
+  }
+.login-container > form > #lower > input[type=submit] {
+    width: 180px;
+    line-height:2.5;
+    margin-top: 3em;
+    background-color: #339dc7;
+    border-radius: 5px;
+    border: no-border;
+    outline: none;
+    color: white;
+    &:hover {
+       background-color: #31ccff ;
+    }
+    &:focus {
+      outline: none;
+    }
+  }*/

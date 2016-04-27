@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  {% load staticfiles %}
+  <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
+  <script src="{% static 'js/lib/go.js' %}"></script>
+  <script src="{% static 'js/src/tree.js' %}"></script>
+  <head>
+    <meta charset="utf-8">
+    <title>Canvas</title>
+  </head>
+  <body>
+    <div id="loading">
+      <img id="loading-image" src="{% static 'images/spinner.gif' %}" alt="Loading..." />
+    </div>
+    <div id="sample">
+      <div id="canvas" style="padding:5px;">
+        <input style="margin-left:0px !important;" type="text" name="graphname" id="graph-name" placeholder="Graph Name">
+        <button type="button" onclick="createGraph()">Create Graph</button> <br>
+        {% if models %}
+          <select id="selected-class" name="nodeclass" style="width:220px;" onchange="onSelectionChange(this.value)">
+            <option disabled selected> -- Select Model -- </option>
+            {% for model in models %}
+             <option value="{{model}}">{{model}}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+        <input style="margin-left:0px !important;" type="text" name="modelname" id="model-name" placeholder="Model Name">
+        <button type="button" onclick="saveModel()">Save Model</button>
+      <!--   <a href="./errors" title="Printing Errors" >Print Errors</a> <br> <br> -->
+        <div id="myDiagramDiv"></div>
+      </div>
+    </div>
+    <div id="openModal" class="modalDialog">
+      <div id="nodeconfig" style="padding:10px; text-align:left;">
+        <a href="#close" title="Close" class="close">X</a>
+        <h4 style="text-align:center;" >Node Configuration</h4>
+        <form id="configForm" action="Javascript:addNodeToGraph()" enctype='application/json'>
+          <label for="nodeclass">Select Class: </label>
+          <select id="selected-class" name="nodeclass" style="width:220px;" onchange="onSelectionChange(this.value)">
+            <option disabled selected> -- Select Node Class -- </option>
+            <option value="AttentionNode">AttentionNode</option>
+            <option value="ConvolutionNode">ConvolutionNode</option>
+            <option value="DataNode">DataNode</option>
+            <option value="DotProductNode">DotProductNode</option>
+            <option value="FilterNode">FilterNode</option>    
+            <option value="FunctionNode">FunctionNode</option>
+            <option value="HadamardNode">HadamardNode</option>
+            <option value="LossNode">LossNode</option>
+            <option value="OnesNode">OnesNode</option>
+            <option value="PoolNode">PoolNode</option>
+            <option value="TargetNode">TargetNode</option>
+            <option value="VectorAddNode">VectorAddNode</option>
+            <option value="VectorsToMatrixNode">VectorsToMatrixNode</option>
+            <option value="WeightNode">WeightNode</option>
+          </select>
+          <br>
+          <label for="nodename">Node Name: </label>
+          <input type="text" name="nodename" id="node-name" placeholder="Node Name"> <br>
+          <div id="node-config-div"></div>
+          <input id="sumbit-btn" type="submit" value="Submit">
+        </form>
+      </div>
+    </div>
+    <script type="text/javascript">
+      document.getElementById("configForm").reset();
+      var loading_spinner = document.getElementById("loading");
+      loading_spinner.style.visibility = 'visible'; 
+      $.ajax({
+        type: "GET",  
+        url: "http://localhost:8000/graph",
+        success: function(response){
+          loading_spinner.style.visibility = 'hidden'; 
+          window.onload = init({"nodes":response.nodes, "connections":response.connections});
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) { 
+          window.onload = init({});
+        }
+      });
+    </script>
+  </body>
+</html>

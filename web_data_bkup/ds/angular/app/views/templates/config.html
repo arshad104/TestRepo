@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+{% if nodeClass != "DataNode" and nodeClass != "ConvolutionNode" and nodeClass != "VectorsToMatrixNode" %}
+	<label for="fan_in">Fan In: </label>
+	<input type="number" name="fan_in" min="0" placeholder="fan_in"> <br>
+	<label for="fan_out">Fan Out: </label>
+	<input type="number" name="fan_out" min="0" placeholder="fan_out"> <br>
+{% endif %}
+
+{% if nodeClass == "WeightNode" or nodeClass == "OnesNode" or nodeClass == "FilterNode"%}
+	{% if nodeClass == "WeightNode" %}
+		<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+		<input type="radio" name="dropout" value="True"> True
+		<input type="radio" name="dropout" value="False"> False <br>
+	{% endif %}
+	{% if nodeClass == "FilterNode" %}
+		<label for="fan_in">NChannels </label>
+		<input type="number" name="n_channels" min="0" placeholder="n_channels"> <br>
+		<label for="n_filters">NFilters: </label>
+		<input type="number" name="fan_out" min="0" placeholder="n_filters"> <br>
+	{% endif %}
+	<label for="weight_update_status" style="padding-top:2px !important;">Weight Update Status: </label>
+	<input type="radio" name="weight_update_status" value="True"> True
+	<input type="radio" name="weight_update_status" value="False"> False <br>
+	<label for="weight_decay">Weight Decay: </label>
+	<input type="number" name="weight_decay" min="0" max="1" step="0.01" placeholder="weight_decay"> <br>
+	<label for="momentum">Momentum: </label>
+	<input type="number" name="momentum" min="0" max="1" step="0.01" placeholder="Momentum"> <br>
+	<label for="alpha">Alpha: </label>
+	<input type="number" name="alpha" min="0" max="1" step="0.01" placeholder="Alpha"> <br>
+	<label for="init_scaler">Init Scaler: </label>
+	<input type="number" name="init_scaler" min="0" max="10" step="0.01" placeholder="init_scaler"> <br>
+
+{% elif nodeClass == "LossNode" or nodeClass == "FunctionNode" or nodeClass == "AttentionNode" %}
+	{% if nodeClass != "LossNode" %}
+		<label for="dropout" style="padding-top:2px !important;">Dropout: </label>
+		<input type="radio" name="dropout" value="True"> True
+		<input type="radio" name="dropout" value="False"> False <br>
+	{% endif %}
+	<label for="a_func">Function Name: </label>
+	<input type="text" name="a_func" placeholder="a_funct"> <br>
+
+{% elif nodeClass == "DataNode" %}
+	<label for="a_func">Function Name: </label>
+	<input type="text" name="a_func" placeholder="a_funct"> <br>
+	<!-- <input pattern="^([A-Za-z0-9_]+):([A-Za-z0-9_]+)$" type="text" name="a_func_param" placeholder="e.g; param1:value, param1:vale"> <br> -->
+	<label for="skip_grad" style="padding-top:2px !important;">Skip Grad: </label>
+	<input type="radio" name="skip_grad" value="True"> True
+	<input type="radio" name="skip_grad" value="False"> False <br>
+{% endif %}

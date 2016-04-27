@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  {% load staticfiles %}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
+  <script src="{% static 'js/lib/jquery-1.12.0.min.js' %}"></script>
+  <script src="{% static 'js/lib/go.js' %}"></script>
+  <script src="{% static 'js/src/tree.js' %}"></script>
+  <head>
+    <meta charset="utf-8">
+    <title>Canvas</title>
+  </head>
+  <body>
+    <div id="loading">
+      <img id="loading-image" src="{% static 'images/spinner.gif' %}" alt="Loading..." />
+    </div>
+    <div id="sample">
+      <div id="canvas" style="padding:5px;">
+        {% if models %}
+          <select id="model-selection" name="nodeclass" style="margin-left:0px !important; width:220px;" onchange="onSelectionModel(this.value)">
+            <option disabled selected> -- Select Model -- </option>
+            {% for model in models %}
+              {% if model == selected_model %}
+                <option value="{{model}}" selected>{{model}}</option>
+              {% else %}
+                <option value="{{model}}">{{model}}</option>
+              {% endif %}
+            {% endfor %}
+          </select> <br>
+        {% endif %}
+          <button class="button-class" type="button" id="create-model-btn" onclick="window.location.href='#save-model'">Create Model</button>
+          <button class="button-class" type="button" id="copy-model-btn" onclick="window.location.href='#copy-model'">Copy Model</button>
+          <button class="button-class" type="button" id="save-btn" onclick="saveChanges()">Save</button>  
+          <input class="button-class start" type="button" name="startstop" id="start-stop-btn" value="Start" onclick="startStopGraphs();" /> <br>
+          <input type="text" name="graphname" id="graph-name" placeholder="Graph Name">
+          <button class="create-graph-btn" type="button" id="graph-sbmt-btn" onclick="createGraph()">Create Graph</button> <br>
+        <div id="myDiagramDiv"></div>
+      </div>
+    </div>
+    <div id="save-model" class="modalDialog">
+      <div style="padding:10px; text-align:left;">
+        <a href="#close" title="Close" class="close">X</a>
+        <h4 style="text-align:center;" >Creating New Model</h4>
+        <form id="saveModelForm" action="Javascript:createNewModel()" enctype='application/json'>
+          <input type="text" name="modelname" id="model-name" placeholder="Model Name">
+          <input id="sumbit-btn" type="submit" value="Submit">
+        </form>
+      </div>
+    </div>
+    <div id="copy-model" class="modalDialog">
+      <div style="padding:10px; text-align:left;">
+        <a href="#close" title="Close" class="close">X</a>
+        <h4 style="text-align:center;" >Copying Model</h4>
+        <form id="copyModelForm" action="Javascript:copyModel()" enctype='application/json'>
+          <input type="text" name="copy-modelname" id="copy-model-name" placeholder="Model Name">
+          <input id="sumbit-btn" type="submit" value="Submit">
+        </form>
+      </div>
+    </div>
+    <div id="node-config" class="modalDialog">
+      <div style="padding:10px; text-align:left;">
+        <a href="#close" title="Close" class="close">X</a>
+        <h4 style="text-align:center;" >Node Configuration</h4>
+        <select id="selected-class" name="nodeclass" style="width:220px; margin-left:10%;" onchange="onSelectionChange(this.value)">
+          <option disabled selected> -- Select Node Class -- </option>
+          <option value="AttentionNode">AttentionNode</option>
+          <option value="ConvolutionNode">ConvolutionNode</option>
+          <option value="DataNode">DataNode</option>
+          <option value="DotProductNode">DotProductNode</option>
+          <option value="FilterNode">FilterNode</option>    
+          <option value="FunctionNode">FunctionNode</option>
+          <option value="HadamardNode">HadamardNode</option>
+          <option value="LossNode">LossNode</option>
+          <option value="OnesNode">OnesNode</option>
+          <option value="PoolNode">PoolNode</option>
+          <option value="TargetNode">TargetNode</option>
+          <option value="VectorAddNode">VectorAddNode</option>
+          <option value="VectorsToMatrixNode">VectorsToMatrixNode</option>
+          <option value="WeightNode">WeightNode</option>
+        </select>
+          <div id="node-config-div"></div>
+      </div>
+    </div>
+    <div id="edit-node-config" class="modalDialog">
+      <div style="padding:10px; text-align:left;">
+        <a href="#close" title="Close" class="close">X</a>
+        <h4 style="text-align:center;" >Edit Node Configuration</h4>
+        <div id="edit-config-div"></div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var loading_spinner = document.getElementById("loading");
+      loading_spinner.style.visibility = 'visible';
+      $.ajax({
+        type: "GET",  
+        url: "http://localhost:8000/graph",
+        success: function(response){
+          loading_spinner.style.visibility = 'hidden'; 
+          window.onload = init();
+          
+          diagram.model = new go.GraphLinksModel(response.nodes, response.connections);
+          if (!response['isRunning']) {
+            diagram.isReadOnly = !response['allowEdit'];
+            allowEdit(response['allowEdit']);
+          }
+          else {
+            diagram.isReadOnly = response['isRunning'];
+            start = response['isRunning'];
+            changeButtonsCss();
+          }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) { 
+          window.onload = init({});
+        }
+      });
+    </script>
+  </body>
+</html>
